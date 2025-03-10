@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Editar Torneo</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+    <style>
+        .centered-button {
+            display: block;
+            margin: 10px auto 0;
+            padding: 10px 20px;
+            background-color: #ff5722;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        .centered-button:hover {
+            background-color: #e64a19;
+        }
+        .centered-text {
+            text-align: center;
+            display: block;
+            margin: 10px auto;
+        }
+        #tableData {
+            display: block;
+            margin: 10px auto;
+            width: 80%;
+            max-width: 500px;
+        }
+        .collapsible {
+            cursor: pointer;
+            padding: 10px;
+            background: rgba(255, 202, 40, 0.2);
+            border: none;
+            text-align: left;
+            outline: none;
+            font-size: 1.2em;
+            color: #ffca28;
+        }
+        .collapsible:hover {
+            background: rgba(255, 202, 40, 0.4);
+        }
+        .content {
+            display: none;
+            padding: 10px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 5px;
+        }
+        #searchJugadores {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 10px;
+            border-radius: 5px;
+        }
+        .jugador-item {
+            margin: 5px 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+        .acciones {
+            display: flex;
+            flex-wrap: nowrap; /* Evita que los botones se dividan en líneas */
+            gap: 5px; /* Espacio pequeño entre botones */
+            margin-left: 10px; /* Espacio mínimo entre datos y botones */
+        }
+        .acciones a {
+            padding: 5px 10px; /* Botones más compactos */
+            font-size: 0.9em; /* Tamaño de fuente reducido para ajuste */
+        }
+    </style>
+</head>
+<body>
+    <h1>Editar Torneo</h1>
+    <form action="/editar_torneo" method="POST">
+        <label>Nombre del Torneo:</label>
+        <input type="text" name="nombre" value="{{ torneo.nombre }}" required>
+        <label>Fecha y Hora:</label>
+        <input type="text" name="fecha_hora" value="{{ torneo.fecha_hora }}" required>
+        <label>Lugar:</label>
+        <input type="text" name="lugar" value="{{ torneo.lugar }}" required>
+        <label>Nº de Inscripciones Abiertas:</label>
+        <input type="number" name="inscripciones_abiertas" value="{{ torneo.inscripciones_abiertas }}" required>
+        <label>Nº de Canchas:</label>
+        <input type="number" name="n_canchas" value="{{ torneo.n_canchas }}" required>
+        <label>Nº de Bloques:</label>
+        <input type="number" name="n_bloques" value="{{ torneo.n_bloques }}" required>
+        <button type="submit" class="centered-button">Guardar Cambios</button>
+    </form>
+
+    <!-- Bolsa de jugadores (colapsada sin contraseña) -->
+    <h2 class="collapsible" onclick="toggleCollapse('bolsaContent')">Bolsa de Jugadores ▼</h2>
+    <div id="bolsaContent" class="content">
+        <input type="text" id="searchJugadores" onkeyup="searchJugadores()" placeholder="Buscar jugadores...">
+        <ul id="jugadoresList">
+            {% for jugador, indice in bolsa %}
+                <li class="jugador-item" data-nombre="{{ jugador.nombre | lower }}">
+                    {{ loop.index }}. 
+                    {{ jugador.nombre }} - 
+                    {% set contacto = jugador.contacto %}
+                    ******{{ contacto[-3:] if contacto|length >= 3 else contacto }} - 
+                    Categoría: {{ jugador.categoria }} - Ranking: {{ jugador.ranking }}
+                    <span class="acciones">
+                        <a href="/editar/{{ indice }}" class="centered-button">Editar</a>
+                        <a href="/eliminar/{{ indice }}" class="centered-button" onclick="return confirm('¿Confirmas eliminar a {{ jugador.nombre }}?')">Eliminar</a>
+                    </span>
+                </li>
+            {% endfor %}
+        </ul>
+    </div>
+
+    <!-- Formulario para agregar jugadores a la bolsa (colapsado) -->
+    <h2 class="collapsible" onclick="toggleCollapse('agregarContent')">Agregar a la Bolsa de Jugadores ▼</h2>
+    <div id="agregarContent" class="content">
+        <form action="/agregar" method="POST" id="agregarForm">
+            <label>Nombre:</label>
+            <input type="text" name="nombre" id="nombre" required>
+            <label>Contacto:</label>
+            <input type="text" name="contacto" id="contacto" required>
+            <label>Categoría:</label>
+            <input type="text" name="categoria" id="categoria" required>
+            <label>Ranking:</label>
+            <input type="text" name="ranking" id="ranking" required>
+            <button type="submit" class="centered-button">Agregar a la Bolsa</button>
+        </form>
+        <label class="centered-text">Pegar tabla desde Excel/Google Sheets (Nombre, Contacto, Categoría, Ranking):</label>
+        <textarea id="tableData" rows="5" cols="50" placeholder="Pega aquí una tabla copiada (filas separadas por enter, columnas por tabuladores)"></textarea>
+        <button onclick="importTable()" class="centered-button">Importar</button>
+    </div>
+
+    <button onclick="window.location.href='/'" class="centered-button">Volver</button>
+
+    <!-- Script para manejar colapso e importación de tabla -->
+    <script>
+        function toggleCollapse(id) {
+            const content = document.getElementById(id);
+            const collapsible = content.previousElementSibling;
+            if (content.style.display === 'block') {
+                content.style.display = 'none';
+                collapsible.textContent = collapsible.textContent.replace('▲', '▼');
+            } else {
+                content.style.display = 'block';
+                collapsible.textContent = collapsible.textContent.replace('▼', '▲');
+            }
+        }
+
+        function importTable() {
+            const tableData = document.getElementById('tableData').value.trim();
+            if (!tableData) {
+                alert("Por favor, pega una tabla válida.");
+                return;
+            }
+
+            const rows = tableData.split('\n');
+            const jugadores = rows.map(row => {
+                const cols = row.split('\t');
+                if (cols.length >= 4) {
+                    return {
+                        nombre: cols[0].trim(),
+                        contacto: cols[1].trim(),
+                        categoria: cols[2].trim(),
+                        ranking: cols[3].trim()
+                    };
+                }
+                return null;
+            }).filter(jugador => jugador !== null);
+
+            fetch('/importar_tabla', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(jugadores)
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    alert('Jugadores importados exitosamente.');
+                    location.reload();
+                } else {
+                    alert('Error al importar: ' + data.message);
+                }
+            })
+            .catch(error => {
+                alert('Error al importar: ' + error);
+            });
+        }
+
+        function searchJugadores() {
+            const input = document.getElementById('searchJugadores').value.toLowerCase();
+            const items = document.getElementsByClassName('jugador-item');
+            for (let i = 0; i < items.length; i++) {
+                const nombre = items[i].getAttribute('data-nombre');
+                items[i].style.display = nombre.includes(input) ? '' : 'none';
+            }
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Encuentros del Torneo</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        h1, h2 { text-align: center; }
+        .cancha { margin: 20px 0; padding: 10px; border: 1px solid #ccc; border-radius: 5px; }
+        .partido { margin: 15px 0; }
+        .partido-header { font-weight: bold; margin-bottom: 5px; display: flex; align-items: center; }
+        .partido-num { margin-right: 20px; } /* Espacio entre "Partido X" y etiquetas */
+        .pareja { display: flex; align-items: center; margin: 5px 0; }
+        .nombres { flex: 1; min-width: 300px; white-space: nowrap; } /* Mantenido para nombres */
+        .set-input { width: 40px; margin: 0 5px; text-align: center; padding: 0;} /* Para 2 dígitos */
+        .set-label { width: 30px; text-align: center; } /* Alineado con inputs */
+        .centered-button { display: inline-block; margin: 10px 5px; padding: 10px 20px; background-color: #ff5722; color: white; border: none; border-radius: 5px; cursor: pointer; }
+        .centered-button:hover { background-color: #e64a19; }
+        .button-container { text-align: center; }
+    </style>
+</head>
+<body>
+    <h1>Encuentros del Torneo</h1>
+
+    <form method="POST" action="/guardar_resultados">
+        {% for encuentro in encuentros %}
+            {% set cancha_idx = loop.index0 %}
+            <div class="cancha">
+                <h2>Cancha {{ loop.index }}</h2>
+                {% for partido in encuentro.partidos %}
+                    {% set partido_idx = loop.index0 %}
+                    <div class="partido">
+                        <div class="partido-header">
+                            <span class="partido-num">Partido {{ loop.index }}:</span>
+                        </div>
+                        <div class="pareja">
+                            <span class="nombres">{{ partido.pareja1[0].nombre }} / {{ partido.pareja1[1].nombre }}</span>
+                            <input type="number" class="set-input" name="p1_{{ cancha_idx }}_{{ partido_idx }}_s1" min="0" max="10">
+                            <input type="number" class="set-input" name="p1_{{ cancha_idx }}_{{ partido_idx }}_s2" min="0" max="10">
+                            <input type="number" class="set-input" name="p1_{{ cancha_idx }}_{{ partido_idx }}_s3" min="0" max="10">
+                        </div>
+                        <div class="pareja">
+                            <span class="nombres">{{ partido.pareja2[0].nombre }} / {{ partido.pareja2[1].nombre }}</span>
+                            <input type="number" class="set-input" name="p2_{{ cancha_idx }}_{{ partido_idx }}_s1" min="0" max="10">
+                            <input type="number" class="set-input" name="p2_{{ cancha_idx }}_{{ partido_idx }}_s2" min="0" max="10">
+                            <input type="number" class="set-input" name="p2_{{ cancha_idx }}_{{ partido_idx }}_s3" min="0" max="10">
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+        {% endfor %}
+
+        <div class="button-container">
+            <button type="submit" class="centered-button">Guardar Resultados</button>
+            <button type="button" class="centered-button" onclick="window.location.href='/lanzar_torneo'">Volver</button>
+        </div>
+    </form>
+</body>
+</html>

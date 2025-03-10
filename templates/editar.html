@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Editar Jugador</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        h1 { text-align: center; }
+        form { max-width: 400px; margin: 0 auto; }
+        label { display: block; margin: 10px 0 5px; }
+        input, select { width: 100%; padding: 8px; margin-bottom: 10px; }
+        .centered-button { display: inline-block; margin: 10px 5px; padding: 10px 20px; background-color: #ff5722; color: white; border: none; border-radius: 5px; cursor: pointer; }
+        .centered-button:hover { background-color: #e64a19; }
+        .error { color: red; text-align: center; }
+        .button-container { text-align: center; margin-top: 20px; }
+    </style>
+</head>
+<body>
+    <h1>Editar Jugador</h1>
+    <form method="POST">
+        <label for="nombre">Nombre:</label>
+        <input type="text" id="nombre" name="nombre" value="{{ jugador.nombre }}" required>
+        
+        <label for="contacto">Contacto:</label>
+        <input type="text" id="contacto" name="contacto" value="{{ jugador.contacto }}" required>
+        
+        <label for="categoria">Categoría:</label>
+        <input type="text" id="categoria" name="categoria" value="{{ jugador.categoria }}" required>
+        
+        <label for="ranking">Ranking:</label>
+        <input type="text" id="ranking" name="ranking" value="{{ jugador.ranking }}" required>
+        
+        {% if error %}
+            <p class="error">{{ error }}</p>
+        {% endif %}
+        
+        <div class="button-container">
+            <button type="submit" class="centered-button">Guardar Cambios</button>
+            <button type="button" class="centered-button" onclick="window.location.href='/editar_torneo'">Volver</button>
+        </div>
+    </form>
+</body>
+</html>

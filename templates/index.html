@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Bolsa de Jugadores - Torneo de Pádel</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+    <style>
+        .collapsible {
+            cursor: pointer;
+            padding: 10px;
+            background: rgba(255, 202, 40, 0.2);
+            border: none;
+            text-align: left;
+            outline: none;
+            font-size: 1.2em;
+            color: #ffca28;
+        }
+        .collapsible:hover {
+            background: rgba(255, 202, 40, 0.4);
+        }
+        .content {
+            display: none;
+            padding: 10px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 5px;
+        }
+        #searchJugadores {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 10px;
+            border-radius: 5px;
+        }
+        .acciones a {
+            margin: 0 5px;
+        }
+        .centered-button {
+            display: inline-block;
+            margin: 10px 5px 0;
+            padding: 10px 20px;
+            background-color: #ff5722;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            text-decoration: none;
+        }
+        .centered-button:hover {
+            background-color: #e64a19;
+        }
+    </style>
+</head>
+<body>
+    <h1>Convocatoria Torneo de Pádel</h1>
+    
+    <!-- Información del torneo -->
+    <div class="torneo-info">
+        <h2>{{ torneo.nombre or 'Sin nombre definido' }}</h2>
+        <p><strong>Fecha y Hora:</strong> {{ torneo.fecha_hora or 'Sin definir' }}</p>
+        <p><strong>Lugar:</strong> {{ torneo.lugar or 'Sin definir' }}</p>
+        <p><strong>Inscripciones abiertas:</strong> {{ torneo.inscripciones_abiertas }} ({{ participantes|length }} inscritas)</p>
+        <p><strong>Nº de Canchas:</strong> {{ torneo.n_canchas }}</p>
+        <p><strong>Nº de Bloques:</strong> {{ torneo.n_bloques }}</p>
+        <a href="/acceso_editar_torneo" class="edit-torneo centered-button">Editar Torneo</a>
+        <a href="/acceso_lanzar_torneo" class="centered-button">Lanzar Torneo</a>
+    </div>
+
+    <!-- Bolsa de jugadores (colapsada sin contraseña) -->
+    <h2 class="collapsible" onclick="toggleCollapse('bolsaContent')">Bolsa de Jugadores ▼</h2>
+    <div id="bolsaContent" class="content">
+        <input type="text" id="searchJugadores" onkeyup="searchJugadores()" placeholder="Buscar jugadores...">
+        <ul id="jugadoresList">
+            {% for jugador, indice in bolsa %}
+                <li class="jugador-item" data-nombre="{{ jugador.nombre | lower }}">
+                    {{ loop.index }}. 
+                    {{ jugador.nombre }} - 
+                    {% set contacto = jugador.contacto %}
+                    ******{{ contacto[-3:] if contacto|length >= 3 else contacto }} - 
+                    Categoría: {{ jugador.categoria }} - Ranking: {{ jugador.ranking }}
+                    <span class="acciones">
+                        <a href="/seleccionar/{{ indice }}" class="centered-button">Seleccionar</a>
+                    </span>
+                </li>
+            {% endfor %}
+        </ul>
+    </div>
+
+    <!-- Participantes del torneo -->
+    <h2>Participantes del Torneo</h2>
+    <ul>
+        {% for participante in participantes %}
+            <li>
+                {{ loop.index }}. 
+                {{ participante.nombre }} - 
+                {% set contacto = participante.contacto %}
+                ******{{ contacto[-3:] if contacto|length >= 3 else contacto }} - 
+                Categoría: {{ participante.categoria }} - Ranking: {{ participante.ranking }}
+                <span class="acciones">
+                    <a href="/eliminar_participante/{{ loop.index0 }}" class="centered-button">Quitar del Torneo</a>
+                </span>
+            </li>
+        {% endfor %}
+    </ul>
+
+    <!-- Lista de espera -->
+    <h2>Lista de Espera</h2>
+    <ul>
+        {% for jugador in espera %}
+            <li>
+                {{ loop.index }}. 
+                {{ jugador.nombre }} - 
+                {% set contacto = jugador.contacto %}
+                ******{{ contacto[-3:] if contacto|length >= 3 else contacto }} - 
+                Categoría: {{ jugador.categoria }} - Ranking: {{ jugador.ranking }}
+                <span class="acciones">
+                    <a href="/eliminar_espera/{{ loop.index0 }}" class="centered-button">Quitar de la Lista</a>
+                </span>
+            </li>
+        {% endfor %}
+    </ul>
+
+    <!-- Script para manejar colapso y búsqueda -->
+    <script>
+        function toggleCollapse(id) {
+            const content = document.getElementById(id);
+            const collapsible = content.previousElementSibling;
+            if (content.style.display === 'block') {
+                content.style.display = 'none';
+                collapsible.textContent = 'Bolsa de Jugadores ▼';
+            } else {
+                content.style.display = 'block';
+                collapsible.textContent = 'Bolsa de Jugadores ▲';
+            }
+        }
+
+        function searchJugadores() {
+            const input = document.getElementById('searchJugadores').value.toLowerCase();
+            const items = document.getElementsByClassName('jugador-item');
+            for (let i = 0; i < items.length; i++) {
+                const nombre = items[i].getAttribute('data-nombre');
+                items[i].style.display = nombre.includes(input) ? '' : 'none';
+            }
+        }
+    </script>
+</body>
+</html>

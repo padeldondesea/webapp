@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Eliminar Participante</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+    <style>
+        .centered-button {
+            display: block;
+            margin: 10px auto 0;
+            padding: 10px 20px;
+            background-color: #ff5722;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            text-decoration: none; /* Para botones como enlaces */
+        }
+        .centered-button:hover {
+            background-color: #e64a19;
+        }
+    </style>
+</head>
+<body>
+    <h1>Eliminar Participante</h1>
+    <p>Confirma la eliminación de {{ jugador.nombre }} del torneo.</p>
+    {% if error %}
+        <p class="error">{{ error }}</p>
+    {% endif %}
+    <form action="/eliminar_participante/{{ indice }}" method="POST">
+        <label>Contraseña:</label>
+        <input type="password" name="password" required>
+        <button type="submit" class="centered-button">Confirmar Eliminación</button>
+    </form>
+    <button onclick="window.location.href='/'" class="centered-button">Volver</button>
+</body>
+</html>

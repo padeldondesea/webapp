@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Lanzar Torneo</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+    <style>
+        body { font-family: Arial, sans-serif; margin: 0; padding: 10px; }
+        h1, h2 { text-align: center; }
+        .centered-button { display: inline-block; margin: 10px 5px; padding: 10px 20px; background-color: #ff5722; color: white; border: none; border-radius: 5px; cursor: pointer; }
+        .centered-button:hover { background-color: #e64a19; }
+        .cancha { margin: 20px 0; padding: 10px; border: 1px solid #ccc; border-radius: 5px; }
+        ul { list-style-type: none; padding: 0; }
+        select { padding: 5px; margin: 5px 0; }
+        label { display: block; margin: 10px 0 5px; }
+        .jugador-manual { display: flex; justify-content: space-between; align-items: center; margin: 5px 0; }
+        .button-container { text-align: center; }
+        .section { margin: 20px auto; max-width: 800px; }
+        .cancha-count { margin: 5px 0; font-weight: bold; }
+    </style>
+</head>
+<body>
+    <h1>Lanzar Torneo</h1>
+    
+    <div class="section">
+        <form action="/lanzar_torneo" method="POST" id="asignar_form">
+            <label for="metodo">Método de asignación:</label>
+            <select name="metodo" id="metodo" onchange="toggleManual(this.value)">
+                <option value="aleatorio" {% if metodo == 'aleatorio' %}selected{% endif %}>Aleatorio</option>
+                <option value="manual" {% if metodo == 'manual' %}selected{% endif %}>Manual</option>
+                <option value="mismo_ranking" {% if metodo == 'mismo_ranking' %}selected{% endif %}>Mismo Ranking</option>
+                <option value="ranking_promedio" {% if metodo == 'ranking_promedio' %}selected{% endif %}>Ranking Promedio Similar</option>
+            </select>
+            
+            <div id="manual-assignment" style="display: {% if metodo == 'manual' %}block{% else %}none{% endif %};">
+                <h2>Asignación Manual</h2>
+                {% for i in range(n_canchas) %}
+                    <div class="cancha-count" id="count_cancha_{{ i }}">Cancha {{ i + 1 }}: 0 jugadores</div>
+                {% endfor %}
+                {% for jugador in participantes %}
+                    <div class="jugador-manual">
+                        <span>{{ jugador.nombre }} (Ranking: {{ jugador.ranking }})</span>
+                        <select name="jugador_{{ loop.index0 }}" onchange="updateCounts()">
+                            {% for j in range(n_canchas) %}
+                                <option value="{{ j }}">{{ j + 1 }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                {% endfor %}
+            </div>
+            
+            <div class="button-container">
+                <button type="submit" class="centered-button">Asignar Jugadores</button>
+            </div>
+        </form>
+    </div>
+    
+    {% if canchas is not none and canchas|length > 0 %}
+        <div class="section">
+            <h2>Resultados de la Asignación (Método: {{ metodo | capitalize }})</h2>
+            {% for cancha in canchas %}
+                <div class="cancha">
+                    <h3>Cancha {{ loop.index }}</h3>
+                    <p>Cantidad de jugadores: {{ cancha.cantidad }}</p>
+                    <p>Ranking promedio: {{ cancha.ranking_promedio }}</p>
+                    <ul>
+                        {% for jugador in cancha.jugadores %}
+                            <li>{{ jugador.nombre }} - Ranking: {{ jugador.ranking }}</li>
+                        {% endfor %}
+                    </ul>
+                </div>
+            {% endfor %}
+            <div class="button-container">
+                <button onclick="window.location.href='/lanzar_torneo'" class="centered-button">Reasignar Jugadores</button>
+                <button onclick="window.location.href='/'" class="centered-button">Volver al Inicio</button>
+                <form id="generarEncuentrosForm" action="/generar_encuentros" method="POST" style="display: inline;">
+                    <input type="hidden" name="canchas" id="canchasInput" value="">
+                    <button type="submit" class="centered-button">Generar Partidos</button>
+                </form>
+            </div>
+            
+            <script>
+                document.addEventListener('DOMContentLoaded', function() {
+                    const canchasData = {{ canchas | tojson | safe }};
+                    const canchasString = JSON.stringify(canchasData);
+                    console.log('Canchas JSON:', canchasString);
+                    document.getElementById('canchasInput').value = canchasString;
+                    
+                    const form = document.getElementById('generarEncuentrosForm');
+                    form.addEventListener('submit', function(event) {
+                        const inputValue = document.getElementById('canchasInput').value;
+                        try {
+                            JSON.parse(inputValue);
+                        } catch (e) {
+                            event.preventDefault();
+                            alert('Error en los datos enviados: ' + e.message);
+                            console.error('Invalid JSON:', inputValue, e);
+                        }
+                    });
+                });
+            </script>
+        </div>
+    {% endif %}
+    
+    <script>
+        function toggleManual(value) {
+            document.getElementById('manual-assignment').style.display = value === 'manual' ? 'block' : 'none';
+            if (value === 'manual') updateCounts();
+        }
+
+        function updateCounts() {
+            const nCanchas = {{ n_canchas }};
+            let counts = Array(nCanchas).fill(0);
+            const selects = document.querySelectorAll('#manual-assignment select');
+            selects.forEach(select => {
+                const canchaIdx = parseInt(select.value);
+                counts[canchaIdx]++;
+            });
+            for (let i = 0; i < nCanchas; i++) {
+                document.getElementById(`count_cancha_${i}`).textContent = `Cancha ${i + 1}: ${counts[i]} jugadores`;
+            }
+        }
+
+        // Inicializar conteo si ya está en modo manual
+        document.addEventListener('DOMContentLoaded', function() {
+            if (document.getElementById('metodo').value === 'manual') {
+                updateCounts();
+            }
+        });
+    </script>
+</body>
+</html>

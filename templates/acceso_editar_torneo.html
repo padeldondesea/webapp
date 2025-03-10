@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Acceso a Editar Torneo</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+    <style>
+        .centered-button {
+            display: block;
+            margin: 10px auto 0;
+            padding: 10px 20px;
+            background-color: #ff5722;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        .centered-button:hover {
+            background-color: #e64a19;
+        }
+    </style>
+</head>
+<body>
+    <h1>Acceso a Editar Torneo</h1>
+    {% if error %}
+        <p class="error">{{ error }}</p>
+    {% endif %}
+    <form action="/acceso_editar_torneo" method="POST">
+        <label>Contraseña:</label>
+        <input type="password" name="password" required>
+        <button type="submit" class="centered-button">Acceder</button>
+    </form>
+    <button onclick="window.location.href='/'" class="centered-button">Volver</button>
+</body>
+</html>
