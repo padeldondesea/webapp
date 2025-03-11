@@ -1,0 +1,12 @@
+Resultados del Torneo
+
+Cancha 1
+  Partido 1: Franco Granati/Harold Vasquez [4, 0, 0] vs Alvaro Rodrigues/Candido [2, 0, 0]
+  Partido 2: Franco Granati/Candido [3, 0, 0] vs Harold Vasquez/Alvaro Rodrigues [3, 0, 0]
+  Partido 3: Franco Granati/Alvaro Rodrigues [1, 0, 0] vs Harold Vasquez/Candido [4, 0, 0]
+
+Cancha 2
+  Partido 1: Bassil/Alex [2, 0, 0] vs Augusto Stenta/Carmine [4, 0, 0]
+  Partido 2: Bassil/Carmine [3, 0, 0] vs Alex/Augusto Stenta [3, 0, 0]
+  Partido 3: Bassil/Augusto Stenta [1, 0, 0] vs Alex/Carmine [4, 0, 0]
+
