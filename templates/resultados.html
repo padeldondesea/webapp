@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Resultados del Torneo</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <style>
+        .cancha {
+            background: rgba(255, 255, 255, 0.2);
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+            max-width: 700px;
+            margin: 0 auto 30px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+            background: rgba(255, 255, 255, 0.15);
+            border-radius: 8px;
+            overflow: hidden;
+        }
+        th, td {
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            padding: 10px;
+            text-align: center;
+            color: #fff;
+        }
+        th {
+            background: rgba(255, 202, 40, 0.4);
+            color: #fff;
+            font-weight: bold;
+        }
+        td {
+            background: rgba(255, 255, 255, 0.1);
+        }
+        .button-container {
+            text-align: center;
+            margin-top: 30px;
+        }
+        button {
+            background: #ff5722;
+            color: #fff;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 5px;
+            font-size: 1.1em;
+            cursor: pointer;
+            transition: background 0.3s;
+            margin: 0 10px;
+        }
+        button:hover {
+            background: #e64a19;
+        }
+    </style>
+</head>
+<body>
+    <h1>Resultados del Torneo</h1>
+
+    {% for cancha_idx, jugadores_stats in estadisticas.items() %}
+        <div class="cancha">
+            <h2>Cancha {{ cancha_idx + 1 }}</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Jugador</th>
+                        <th>W</th>
+                        <th>L</th>
+                        <th>T</th>
+                        <th>Diff</th>
+                        <th>+Rk</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for nombre, stats in jugadores_stats.items() %}
+                        <tr>
+                            <td>{{ nombre }}</td>
+                            <td>{{ stats.W }}</td>
+                            <td>{{ stats.L }}</td>
+                            <td>{{ stats.T }}</td>
+                            <td>{{ stats.diff }}</td>
+                            <td>{{ stats.plus_rk | round(2) }}</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    {% endfor %}
+
+    <div class="button-container">
+        <button type="button" onclick="compartirResultados()">Compartir Resultados</button>
+        <button type="button" onclick="confirmarReset()">Volver al Inicio</button>
+    </div>
+
+    <script>
+        function compartirResultados() {
+            const element = document.body;
+            const opt = {
+                margin: 0.5,
+                filename: 'resultados_torneo.pdf',
+                image: { type: 'jpeg', quality: 0.98 },
+                html2canvas: { scale: 2 },
+                jsPDF: { unit: 'in', format: 'letter', orientation: 'portrait' }
+            };
+
+            html2pdf().from(element).set(opt).output('blob').then(pdfBlob => {
+                const pdfFile = new File([pdfBlob], 'resultados_torneo.pdf', { type: 'application/pdf' });
+
+                if (navigator.share && navigator.canShare && navigator.canShare({ files: [pdfFile] })) {
+                    navigator.share({
+                        title: 'Resultados del Torneo',
+                        files: [pdfFile],
+                        text: 'Aquí están los resultados del torneo.'
+                    }).then(() => {
+                        console.log('Resultados compartidos');
+                    }).catch(err => {
+                        console.error('Error al compartir:', err);
+                        descargarOImprimir(pdfBlob);
+                    });
+                } else {
+                    descargarOImprimir(pdfBlob);
+                }
+            });
+        }
+
+        function descargarOImprimir(pdfBlob) {
+            const url = URL.createObjectURL(pdfBlob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'resultados_torneo.pdf';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+
+            if (confirm('¿Deseas imprimir el PDF también?')) {
+                window.print();
+            }
+        }
+
+        function confirmarReset() {
+            if (confirm('¿Estás seguro de volver al inicio? Esto reseteará todos los datos del torneo.')) {
+                window.location.href = '/resetear_torneo';
+            }
+        }
+    </script>
+</body>
+</html>

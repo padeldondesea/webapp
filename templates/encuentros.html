@@ -3,17 +3,18 @@
 <head>
     <title>Encuentros del Torneo</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <style>
         body { font-family: Arial, sans-serif; margin: 20px; }
         h1, h2 { text-align: center; }
         .cancha { margin: 20px 0; padding: 10px; border: 1px solid #ccc; border-radius: 5px; }
         .partido { margin: 15px 0; }
         .partido-header { font-weight: bold; margin-bottom: 5px; display: flex; align-items: center; }
-        .partido-num { margin-right: 20px; } /* Espacio entre "Partido X" y etiquetas */
+        .partido-num { margin-right: 20px; }
         .pareja { display: flex; align-items: center; margin: 5px 0; }
-        .nombres { flex: 1; min-width: 300px; white-space: nowrap; } /* Mantenido para nombres */
-        .set-input { width: 40px; margin: 0 5px; text-align: center; padding: 0;} /* Para 2 dígitos */
-        .set-label { width: 30px; text-align: center; } /* Alineado con inputs */
+        .nombres { flex: 1; min-width: 300px; white-space: nowrap; }
+        .set-input { width: 40px; margin: 0 5px; text-align: center; padding: 0; }
+        .set-label { width: 30px; text-align: center; }
         .centered-button { display: inline-block; margin: 10px 5px; padding: 10px 20px; background-color: #ff5722; color: white; border: none; border-radius: 5px; cursor: pointer; }
         .centered-button:hover { background-color: #e64a19; }
         .button-container { text-align: center; }
@@ -22,7 +23,7 @@
 <body>
     <h1>Encuentros del Torneo</h1>
 
-    <form method="POST" action="/guardar_resultados">
+    <form id="resultadosForm">
         {% for encuentro in encuentros %}
             {% set cancha_idx = loop.index0 %}
             <div class="cancha">
@@ -51,9 +52,95 @@
         {% endfor %}
 
         <div class="button-container">
-            <button type="submit" class="centered-button">Guardar Resultados</button>
-            <button type="button" class="centered-button" onclick="window.location.href='/lanzar_torneo'">Volver</button>
+            <button type="button" class="centered-button" onclick="guardarParciales()">Guardar Resultados Parciales</button>
+            <button type="button" class="centered-button" onclick="compartirEncuentros()">Compartir Encuentros</button>
+            <button type="button" class="centered-button" onclick="finalizarTorneo()">Finalizar Torneo</button>
         </div>
     </form>
+
+    <script>
+        function guardarParciales() {
+            const form = document.getElementById('resultadosForm');
+            const formData = new FormData(form);
+            fetch('/guardar_resultados_parciales', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                alert(data.message);
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Error al guardar resultados parciales');
+            });
+        }
+
+        function compartirEncuentros() {
+            const element = document.body;
+            const opt = {
+                margin: 0.5,
+                filename: 'encuentros_torneo.pdf',
+                image: { type: 'jpeg', quality: 0.98 },
+                html2canvas: { scale: 2 },
+                jsPDF: { unit: 'in', format: 'letter', orientation: 'portrait' }
+            };
+
+            html2pdf().from(element).set(opt).output('blob').then(pdfBlob => {
+                const pdfFile = new File([pdfBlob], 'encuentros_torneo.pdf', { type: 'application/pdf' });
+
+                if (navigator.share && navigator.canShare && navigator.canShare({ files: [pdfFile] })) {
+                    navigator.share({
+                        title: 'Encuentros del Torneo',
+                        files: [pdfFile],
+                        text: 'Aquí están los encuentros del torneo.'
+                    }).then(() => {
+                        console.log('Encuentros compartidos');
+                    }).catch(err => {
+                        console.error('Error al compartir:', err);
+                        descargarOImprimir(pdfBlob);
+                    });
+                } else {
+                    descargarOImprimir(pdfBlob);
+                }
+            });
+        }
+
+        function descargarOImprimir(pdfBlob) {
+            const url = URL.createObjectURL(pdfBlob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'encuentros_torneo.pdf';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+
+            if (confirm('¿Deseas imprimir el PDF también?')) {
+                window.print();
+            }
+        }
+
+        function finalizarTorneo() {
+            if (confirm('¿Estás seguro de finalizar el torneo? Esto guardará los resultados y calculará estadísticas.')) {
+                const form = document.getElementById('resultadosForm');
+                const formData = new FormData(form);
+                fetch('/finalizar_torneo', {
+                    method: 'POST',
+                    body: formData
+                })
+                .then(response => response.text())
+                .then(html => {
+                    document.open();
+                    document.write(html);
+                    document.close();
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('Error al finalizar el torneo');
+                });
+            }
+        }
+    </script>
 </body>
 </html>
